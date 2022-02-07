@@ -21,6 +21,7 @@ import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener.REASON_
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.lang.Exception
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -65,9 +66,10 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         else {
             Log.d("Tag", "Permission check granted")
             Toast.makeText(this,"Permission already granted!", Toast.LENGTH_SHORT).show()
-            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER,100,1.toFloat(),this)
             binding.mapView.onCreate(null)
             binding.mapView.getMapAsync(this)
+            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,5F,this)
+
         }
 
         lifecycleScope.launch {
@@ -90,9 +92,10 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         Log.d("Tag", "permission result")
         if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             Log.d("Tag", "result true")
-            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0.toFloat(),this)
             binding.mapView.onCreate(null)
             binding.mapView.getMapAsync(this)
+            locationManager?.requestLocationUpdates(LocationManager.GPS_PROVIDER,1000,5F,this)
+
         }
     }
 
@@ -104,18 +107,10 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         map.setOnCameraMoveStartedListener(this)
         map.isMyLocationEnabled = true
         gmap = map
-//        lifecycleScope.launch{
-//            while (true){
-//                if(state){
-//                    map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f))
-//                }
-//                delay(1000)
-//            }
-//        }
-        //map.addMarker(MarkerOptions().position(latLng).title("Marker"))
     }
 
     override fun onLocationChanged(location: Location) {
+        try{
         Log.d("Tag", "loc change")
         binding.progressBar.visibility=View.GONE
         state = true
@@ -132,12 +127,18 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
             1
         )[0].getAddressLine(0)
         locationList.add(location)
+        Log.d("list", locationList.toString())
         if (locationList.size>1) {
+            Log.d("list", locationList.lastIndex.toString())
             totalDistance += location.distanceTo(locationList[locationList.lastIndex - 1])
         }
         val miles = locationDistanceParse(totalDistance)[0].toInt()
         val feet = locationDistanceParse(totalDistance)[1].shorten(2)
-        binding.textView2.text = "Total Distance: $miles mi, $feet ft."
+        //binding.textView2.text = "Total Distance: $miles mi, $feet ft."
+        binding.textView2.text = "Total Distance: ${totalDistance.shorten(5)} meters"
+        } catch (e: Exception){
+            Log.d("list", e.toString())
+        }
     }
     override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
     override fun onProviderEnabled(provider: String) {}
