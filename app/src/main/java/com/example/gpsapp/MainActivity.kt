@@ -119,7 +119,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         lon = location.longitude
         latLng = LatLng(lat,lon)
         if(track)
-            gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f), 100, null)
+            gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18f), 100, null)
         binding.coord.text = "Latitude: ${lat.shorten(5)}, Longitude: ${lon.shorten(5)}"
         binding.textView.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
             lat,
@@ -182,7 +182,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
     override fun onMyLocationButtonClick(): Boolean {
         Log.d("button", "mylocationbuttonclick")
         track = true
-        gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f), 500, null)
+        gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18f), 500, null)
         return false
     }
 
