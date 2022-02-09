@@ -42,6 +42,9 @@ var lon = 0.0
 var latLng = LatLng(0.0, 0.0)
 var gmap: GoogleMap? = null
 var track = true
+var favLocDisplay = true
+var favTime: Long = 0L
+var favLoc: Location? = null
 
 
 class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnCameraMoveStartedListener {
@@ -82,6 +85,9 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
                     var seconds = TimeUnit.MILLISECONDS.toSeconds(time)
                     seconds -= minutes * 60
                     binding.textView3.text = "Time Elapsed: $minutes min, ${seconds}s"
+                    if (favLocDisplay){
+                        binding.textView4.text = "Favorite Loc Time Elapsed: $minutes min, ${seconds}s"
+                    }
                 }
                 delay(100)
             }
@@ -140,6 +146,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
             //binding.textView2.text = "Total Distance: ${totalDistance.shorten(5)} meters"
 
             if(locationList.size > 1){
+                favLocDisplay = false
                 val timeDiff = timeList[timeList.lastIndex] - timeList[timeList.lastIndex - 1]
                 timeDiffList.add(timeDiff)
                 val diffIndex = timeDiffList.indexOf(timeDiffList.maxOrNull())
