@@ -9,6 +9,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -19,6 +20,7 @@ import com.example.gpsapp.databinding.ActivityMainBinding
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.GoogleMap.OnCameraMoveStartedListener.REASON_GESTURE
 import com.google.android.gms.maps.model.LatLng
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.lang.Exception
@@ -30,9 +32,11 @@ import java.util.concurrent.TimeUnit
 private lateinit var binding: ActivityMainBinding
 private var totalDistance = 0.0
 private var locationList  = mutableListOf<Location>()
+private var timeList = mutableListOf<Long>()
+private var timeDiffList = mutableListOf<Long>()
 var locationManager: LocationManager? = null
 var locationChangedTime: Long = 0L
-var state = true
+var state = false
 var lat = 0.0
 var lon = 0.0
 var latLng = LatLng(0.0, 0.0)
@@ -40,15 +44,13 @@ var gmap: GoogleMap? = null
 var track = true
 
 
-class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,GoogleMap.OnMyLocationClickListener,GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnCameraMoveStartedListener {
+class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,GoogleMap.OnMyLocationButtonClickListener, GoogleMap.OnCameraMoveStartedListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         Log.d("Tag", "oncreate")
-//        binding.mapView.onCreate(null)
-//        binding.mapView.getMapAsync(this)
 
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         if (ActivityCompat.checkSelfPermission(
@@ -75,7 +77,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         lifecycleScope.launch {
             while (true) {
                 if(state) {
-                    val time = System.currentTimeMillis() - locationChangedTime
+                    val time = SystemClock.elapsedRealtime() - locationChangedTime
                     val minutes = TimeUnit.MILLISECONDS.toMinutes(time)
                     var seconds = TimeUnit.MILLISECONDS.toSeconds(time)
                     seconds -= minutes * 60
@@ -103,7 +105,6 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         Log.d("Tag", "map ready")
         binding.mapView.onResume()
         map.setOnMyLocationButtonClickListener(this)
-        map.setOnMyLocationClickListener(this)
         map.setOnCameraMoveStartedListener(this)
         map.isMyLocationEnabled = true
         gmap = map
@@ -111,31 +112,51 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
 
     override fun onLocationChanged(location: Location) {
         try{
-        Log.d("Tag", "loc change")
-        binding.progressBar.visibility=View.GONE
-        state = true
-        locationChangedTime = System.currentTimeMillis()
-        lat = location.latitude
-        lon = location.longitude
-        latLng = LatLng(lat,lon)
-        if(track)
-            gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18f), 100, null)
-        binding.coord.text = "Latitude: ${lat.shorten(5)}, Longitude: ${lon.shorten(5)}"
-        binding.textView.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
-            lat,
-            lon,
-            1
-        )[0].getAddressLine(0)
-        locationList.add(location)
-        Log.d("list", locationList.toString())
-        if (locationList.size>1) {
-            Log.d("list", locationList.lastIndex.toString())
-            totalDistance += location.distanceTo(locationList[locationList.lastIndex - 1])
-        }
-        val miles = locationDistanceParse(totalDistance)[0].toInt()
-        val feet = locationDistanceParse(totalDistance)[1].shorten(2)
-        //binding.textView2.text = "Total Distance: $miles mi, $feet ft."
-        binding.textView2.text = "Total Distance: ${totalDistance.shorten(5)} meters"
+            Log.d("Tag", "loc change")
+            binding.progressBar.visibility=View.GONE
+            state = true
+            locationChangedTime = SystemClock.elapsedRealtime()
+            lat = location.latitude
+            lon = location.longitude
+            latLng = LatLng(lat,lon)
+            if(track)
+                gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18f), 100, null)
+            binding.coord.text = "Latitude: ${lat.shorten(5)}, Longitude: ${lon.shorten(5)}"
+            binding.textView.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
+                lat,
+                lon,
+                1
+            )[0].getAddressLine(0)
+            locationList.add(location)
+            timeList.add(locationChangedTime)
+            Log.d("list", locationList.toString())
+            if (locationList.size>1) {
+                Log.d("list", locationList.lastIndex.toString())
+                totalDistance += location.distanceTo(locationList[locationList.lastIndex - 1])
+            }
+            val miles = locationDistanceParse(totalDistance)[0].toInt()
+            val feet = locationDistanceParse(totalDistance)[1].shorten(2)
+            binding.textView2.text = "Total Distance: $miles mi, $feet ft."
+            //binding.textView2.text = "Total Distance: ${totalDistance.shorten(5)} meters"
+
+            if(locationList.size > 1){
+                val timeDiff = timeList[timeList.lastIndex] - timeList[timeList.lastIndex - 1]
+                timeDiffList.add(timeDiff)
+                val diffIndex = timeDiffList.indexOf(timeDiffList.maxOrNull())
+                val favoriteLocation = locationList[diffIndex]
+                val favoriteTime = timeDiffList[diffIndex]
+                val minutes = TimeUnit.MILLISECONDS.toMinutes(favoriteTime)
+                var seconds = TimeUnit.MILLISECONDS.toSeconds(favoriteTime)
+                seconds -= minutes * 60
+                binding.textView4.text = "Favorite Location Time: $minutes min, ${seconds}s"
+                binding.textView5.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
+                    favoriteLocation.latitude,
+                    favoriteLocation.longitude,
+                    1
+                )[0].getAddressLine(0)
+            }
+
+
         } catch (e: Exception){
             Log.d("list", e.toString())
         }
@@ -170,13 +191,6 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
         Log.d("Tag", "pause")
         if(gmap!=null)
             binding.mapView.onPause()
-    }
-
-    override fun onMyLocationClick(location: Location) {
-
-        Log.d("button", "onmylocationclick")
-
-        //gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 17f), 500, null)
     }
 
     override fun onMyLocationButtonClick(): Boolean {
