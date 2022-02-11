@@ -20,11 +20,11 @@
         android:id="@+id/name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:text="Ved Kothavade"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:layout_editor_absoluteX="-158dp" />
+        android:text="Ved Kothavade: GPS App"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.card.MaterialCardView
         android:layout_width="0dp"
