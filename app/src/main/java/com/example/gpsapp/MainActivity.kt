@@ -84,9 +84,10 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
                     val minutes = TimeUnit.MILLISECONDS.toMinutes(time)
                     var seconds = TimeUnit.MILLISECONDS.toSeconds(time)
                     seconds -= minutes * 60
-                    binding.textView3.text = "Time Elapsed: $minutes min, ${seconds}s"
+                    binding.time.text = "Time Elapsed: $minutes min, ${seconds}s"
                     if (favLocDisplay){
-                        binding.textView4.text = "Favorite Loc Time Elapsed: $minutes min, ${seconds}s"
+                        binding.favTime.text = "Favorite Location Time: $minutes min, ${seconds}s"
+                        binding.favLocation.text = binding.location.text
                     }
                 }
                 delay(100)
@@ -127,8 +128,8 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
             latLng = LatLng(lat,lon)
             if(track)
                 gmap?.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 18f), 100, null)
-            binding.coord.text = "Latitude: ${lat.shorten(5)}, Longitude: ${lon.shorten(5)}"
-            binding.textView.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
+            binding.coord.text = lat.shorten(5).toString() + ", " + lon.shorten(5).toString()
+            binding.location.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
                 lat,
                 lon,
                 1
@@ -142,7 +143,7 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
             }
             val miles = locationDistanceParse(totalDistance)[0].toInt()
             val feet = locationDistanceParse(totalDistance)[1].shorten(2)
-            binding.textView2.text = "Total Distance: $miles mi, $feet ft."
+            binding.distance.text = "Total Distance: $miles mi, $feet ft."
             //binding.textView2.text = "Total Distance: ${totalDistance.shorten(5)} meters"
 
             if(locationList.size > 1){
@@ -155,8 +156,8 @@ class MainActivity : AppCompatActivity(), LocationListener, OnMapReadyCallback,G
                 val minutes = TimeUnit.MILLISECONDS.toMinutes(favoriteTime)
                 var seconds = TimeUnit.MILLISECONDS.toSeconds(favoriteTime)
                 seconds -= minutes * 60
-                binding.textView4.text = "Favorite Location Time: $minutes min, ${seconds}s"
-                binding.textView5.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
+                binding.favTime.text = "Favorite Location Time: $minutes min, ${seconds}s"
+                binding.favLocation.text = Geocoder(binding.root.context, Locale.US).getFromLocation(
                     favoriteLocation.latitude,
                     favoriteLocation.longitude,
                     1
